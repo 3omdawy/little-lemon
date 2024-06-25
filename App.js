@@ -5,6 +5,7 @@ import Profile from './screens/Profile';
 import { createStackNavigator } from "@react-navigation/stack";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Splash from './screens/Splash';
+import Home from './screens/Home';
 
 const Stack = createStackNavigator();
 
@@ -31,12 +32,14 @@ export default function App() {
         >
           {isOnboardingCompleted ? (
             <>
+              <Stack.Screen name="Home" component={Home} />
               <Stack.Screen name="Profile" component={Profile} />
               <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             </>) : (
             <>
               <Stack.Screen name="Onboarding" component={OnboardingScreen} />
               <Stack.Screen name="Profile" component={Profile} />
+              <Stack.Screen name="Home" component={Home} />
             </>)
           }
         </Stack.Navigator>

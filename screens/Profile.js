@@ -1,15 +1,17 @@
 import * as React from 'react';
-import { View, Image, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
-import { validateEmail } from '../utils';
+import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { validateEmail, calculateImageText } from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaskedTextInput } from 'react-native-mask-text';
-import FontAwesomeIcon from '@expo/vector-icons/FontAwesome6';
 import * as ImagePicker from 'expo-image-picker';
 import { ScrollView } from 'react-native-gesture-handler';
 import Toast from 'react-native-toast-message';
 import Checkbox from 'expo-checkbox';
+import styles from '../assets/styles';
+import Navbar from '../components/Navbar';
+import { Avatar } from '../components/Avatar';
 
-function Profile({navigation}) {
+function Profile({ navigation }) {
     const [storedUserData, setStoredUserData] = React.useState({
         firstName: '',
         lastName: '',
@@ -50,17 +52,6 @@ function Profile({navigation}) {
             [key]: !prevState[key],
         }));
 
-
-    const Avatar = ({ path, text }) => (
-        <View style={styles.profileImage}>
-            {
-                path ?
-                    <Image source={{ uri: path }} style={styles.profileImage} /> :
-                    <Text>{text}</Text>
-            }
-        </View>
-    )
-
     React.useEffect(() => {
         (async () => {
             try {
@@ -82,7 +73,7 @@ function Profile({navigation}) {
                     });
 
                     // Setting the image
-                    calculateImageText(loadedUserData.imagePath, loadedUserData.lastName, loadedUserData.firstName);
+                    setImageText(calculateImageText(loadedUserData.imagePath, loadedUserData.lastName, loadedUserData.firstName));
 
                     const loadedPref = await AsyncStorage.getItem("preferences");
                     setPreferences(loadedPref === null ? [] : JSON.parse(loadedPref));
@@ -93,16 +84,6 @@ function Profile({navigation}) {
         })();
     }, []);
 
-    function calculateImageText(path, lName, fName) {
-        if (path === '') {
-            if (lName === '') {
-                setImageText(fName.substring(0, 2));
-            }
-            else {
-                setImageText(fName.substring(0, 1) + lName.substring(0, 1));
-            }
-        }
-    }
     const pickImage = async () => {
         // No permissions request is necessary for launching the image library
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -119,7 +100,7 @@ function Profile({navigation}) {
 
     const removeImage = () => {
         setImagePath('');
-        calculateImageText('', lastName, name)
+        setImageText(calculateImageText('', lastName, name));
     }
 
     const handleNameEdit = (text) => {
@@ -161,7 +142,7 @@ function Profile({navigation}) {
         handlePhoneEdit(storedUserData.phone);
         handleMailEdit(storedUserData.mail);
         setImagePath(storedUserData.imagePath);
-        calculateImageText(storedUserData.imagePath, storedUserData.lastName, storedUserData.firstName);
+        setImageText(calculateImageText(storedUserData.imagePath, storedUserData.lastName, storedUserData.firstName));
         setPreferences(savedPreferences);
         Toast.show({
             type: 'success',
@@ -212,8 +193,12 @@ function Profile({navigation}) {
                 text1: 'Logged Out',
                 text2: 'Logged out successfully'
             });
+            let wentToNewTab = false;
             setInterval(() => {
-                navigation.push('Onboarding');
+                if (!wentToNewTab) {
+                    navigation.push('Onboarding');
+                    wentToNewTab = true;
+                }
             }, 1000);
         }
         catch (err) {
@@ -224,222 +209,138 @@ function Profile({navigation}) {
             });
         }
     }
+    function goToProfile() {
+    }
+    function goToHome() {
+        navigation.push('Home');
+    }
 
     return (
-        <View style={{ flex: 1 }}>
-            <ScrollView style={{ flex: 1 }}>
-                <KeyboardAvoidingView
-                    style={styles.container}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'position'}>
+        <View style={styles.container}>
 
-                    <View style={styles.navbar}>
-                        <Pressable>
-                            <FontAwesomeIcon
-                                name="arrow-alt-circle-left"
-                                size={40}
-                                color="#495E57" />
-                        </Pressable>
-                        <Image
-                            style={styles.logo}
-                            source={require('../assets/Logo.png')}
-                            resizeMode='contain'
-                            accessible={true}
-                            accessibilityLabel={'Little Lemon Logo'}
+            <Navbar imagePath={storedUserData.imagePath} imageText={imageText} goToProfile={goToProfile} goToHome={goToHome} hideBack={false} />
+            <ScrollView style={{ flex: 1 }}>
+                <View style={{ marginVertical: 20 }}>
+                    <Text style={styles.sectionTitle}>Personal Information</Text>
+                    <View style={{ marginTop: 10 }}>
+                        <Text style={{ fontSize: 16 }}>Avatar</Text>
+                        <View
+                            style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginTop: 10
+                            }}>
+                            <Avatar path={imagePath} text={imageText} />
+                            <Pressable style={styles.buttonPrimary} onPress={pickImage}>
+                                <Text style={styles.buttonText}>Change</Text>
+                            </Pressable>
+                            <Pressable style={styles.buttonSecondary} onPress={removeImage}>
+                                <Text style={styles.buttonTextSecondary}>Remove</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+                    <View style={{ marginTop: 20 }}>
+                        <Text style={{ fontSize: 16 }}>First Name</Text>
+                        <TextInput
+                            style={styles.textInput}
+                            placeholder='Type your first name'
+                            value={name}
+                            onChangeText={text => handleNameEdit(text)}
+                            maxLength={100}
+                            keyboardType='default' />
+                        <Text style={{ color: '#DC4C64' }}>{nameErrorText}</Text>
+                    </View>
+                    <View style={{ marginTop: 20 }}>
+                        <Text style={{ fontSize: 16 }}>Last Name</Text>
+                        <TextInput
+                            style={styles.textInput}
+                            placeholder='Type your last name'
+                            value={lastName}
+                            onChangeText={text => handleLastNameEdit(text)}
+                            maxLength={100}
+                            keyboardType='default' />
+                        <Text style={{ color: '#DC4C64' }}>{lastNameErrorText}</Text>
+                    </View>
+                    <View style={{ marginTop: 20 }}>
+                        <Text style={{ fontSize: 16 }}>Email</Text>
+                        <TextInput
+                            style={styles.textInput}
+                            placeholder='Type your email'
+                            value={email}
+                            onChangeText={text => handleMailEdit(text)}
+                            maxLength={50}
+                            keyboardType='email-address' />
+                    </View>
+                    <View style={{ marginTop: 20 }}>
+                        <Text style={{ fontSize: 16 }}>Phone Number</Text>
+                        <MaskedTextInput
+                            style={styles.textInput}
+                            placeholder='Type your phone number'
+                            mask='(999) 999-9999'
+                            value={phone}
+                            onChangeText={(text, rawText) => handlePhoneEdit(rawText)}
+                            keyboardType='number-pad' />
+                    </View>
+                </View>
+                <View style={{ marginBottom: 20 }}>
+                    <Text style={styles.sectionTitle}>Email Notifications</Text>
+                    <Pressable style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }} onPressIn={updateState('orderStatus')}>
+                        <Checkbox
+                            value={preferences.orderStatus}
+                            onValueChange={updateState('orderStatus')}
                         />
-                        <Avatar path={storedUserData.imagePath} text={imageText} />
-                    </View>
-                    <View style={{ marginVertical: 20 }}>
-                        <Text style={styles.text}>Personal Information</Text>
-                        <View style={{ marginTop: 10 }}>
-                            <Text style={{ fontSize: 16 }}>Avatar</Text>
-                            <View
-                                style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginTop: 10
-                                }}>
-                                <Avatar path={imagePath} text={imageText} />
-                                <Pressable style={styles.button} onPress={pickImage}>
-                                    <Text style={styles.buttonText}>Change</Text>
-                                </Pressable>
-                                <Pressable style={styles.buttonSecondary} onPress={removeImage}>
-                                    <Text style={styles.buttonTextSecondary}>Remove</Text>
-                                </Pressable>
-                            </View>
-                        </View>
-                        <View style={{ marginTop: 20 }}>
-                            <Text style={{ fontSize: 16 }}>First Name</Text>
-                            <TextInput
-                                style={styles.textInput}
-                                placeholder='Type your first name'
-                                value={name}
-                                onChangeText={text => handleNameEdit(text)}
-                                maxLength={100}
-                                keyboardType='default' />
-                            <Text style={{ color: '#DC4C64' }}>{nameErrorText}</Text>
-                        </View>
-                        <View style={{ marginTop: 20 }}>
-                            <Text style={{ fontSize: 16 }}>Last Name</Text>
-                            <TextInput
-                                style={styles.textInput}
-                                placeholder='Type your last name'
-                                value={lastName}
-                                onChangeText={text => handleLastNameEdit(text)}
-                                maxLength={100}
-                                keyboardType='default' />
-                            <Text style={{ color: '#DC4C64' }}>{lastNameErrorText}</Text>
-                        </View>
-                        <View style={{ marginTop: 20 }}>
-                            <Text style={{ fontSize: 16 }}>Email</Text>
-                            <TextInput
-                                style={styles.textInput}
-                                placeholder='Type your email'
-                                value={email}
-                                onChangeText={text => handleMailEdit(text)}
-                                maxLength={50}
-                                keyboardType='email-address' />
-                        </View>
-                        <View style={{ marginTop: 20 }}>
-                            <Text style={{ fontSize: 16 }}>Phone Number</Text>
-                            <MaskedTextInput
-                                style={styles.textInput}
-                                placeholder='Type your phone number'
-                                mask='(999) 999-9999'
-                                value={phone}
-                                onChangeText={(text, rawText) => handlePhoneEdit(rawText)}
-                                keyboardType='number-pad' />
-                        </View>
-                    </View>
-                    <View style={{ marginBottom: 20 }}>
-                        <Text style={styles.text}>Email Notifications</Text>
-                        <Pressable style={{ flexDirection: 'row', alignItems: 'center' }} onPressIn={updateState('orderStatus')}>
-                            <Checkbox
-                                value={preferences.orderStatus}
-                                onValueChange={updateState('orderStatus')}
-                            />
-                            <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Order statuses</Text>
-                        </Pressable>
-                        <Pressable style={{ flexDirection: 'row', alignItems: 'center' }} onPressIn={updateState('passwordChanges')}>
-                            <Checkbox
-                                value={preferences.passwordChanges}
-                                onValueChange={updateState('passwordChanges')}
-                            />
-                            <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Password Changes</Text>
-                        </Pressable>
-                        <Pressable style={{ flexDirection: 'row', alignItems: 'center' }} onPressIn={updateState('specialOffers')}>
-                            <Checkbox
-                                value={preferences.specialOffers}
-                                onValueChange={updateState('specialOffers')}
-                            />
-                            <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Special Offers</Text>
-                        </Pressable>
-                        <Pressable style={{ flexDirection: 'row', alignItems: 'center' }} onPressIn={updateState('newsletter')}>
-                            <Checkbox
-                                value={preferences.newsletter}
-                                onValueChange={updateState('newsletter')}
-                            />
-                            <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Newsletter</Text>
-                        </Pressable>
-                    </View>
-                    <View style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                    }}>
-                        <Pressable
-                            style={styles.buttonSecondary}
-                            onPressIn={discardChanges}>
-                            <Text style={styles.buttonTextSecondary}>Discard</Text>
-                        </Pressable>
-                        <Pressable
-                            style={() => isNameValid && isMailValid && isPhoneValid && isLastNameValid ? styles.button : styles.buttonDisabled}
-                            disabled={!isNameValid || !isMailValid || !isPhoneValid || !isLastNameValid}
-                            onPressIn={saveChanges}>
-                            <Text style={styles.buttonText}>Save</Text>
-                        </Pressable>
-                    </View>
+                        <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Order statuses</Text>
+                    </Pressable>
+                    <Pressable style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }} onPressIn={updateState('passwordChanges')}>
+                        <Checkbox
+                            value={preferences.passwordChanges}
+                            onValueChange={updateState('passwordChanges')}
+                        />
+                        <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Password Changes</Text>
+                    </Pressable>
+                    <Pressable style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }} onPressIn={updateState('specialOffers')}>
+                        <Checkbox
+                            value={preferences.specialOffers}
+                            onValueChange={updateState('specialOffers')}
+                        />
+                        <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Special Offers</Text>
+                    </Pressable>
+                    <Pressable style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 5 }} onPressIn={updateState('newsletter')}>
+                        <Checkbox
+                            value={preferences.newsletter}
+                            onValueChange={updateState('newsletter')}
+                        />
+                        <Text style={{ fontSize: 16, paddingHorizontal: 10 }}>Newsletter</Text>
+                    </Pressable>
+                </View>
+                <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                }}>
                     <Pressable
-                        style={styles.buttonLogout}
+                        style={styles.buttonSecondary}
+                        onPressIn={discardChanges}>
+                        <Text style={styles.buttonTextSecondary}>Discard</Text>
+                    </Pressable>
+                    <Pressable
+                        style={() => isNameValid && isMailValid && isPhoneValid && isLastNameValid ? styles.buttonPrimary : styles.buttonDisabled}
+                        disabled={!isNameValid || !isMailValid || !isPhoneValid || !isLastNameValid}
+                        onPressIn={saveChanges}>
+                        <Text style={styles.buttonText}>Save</Text>
+                    </Pressable>
+                </View>
+                <View style={{ marginVertical: 20 }}>
+                    <Pressable
+                        style={styles.buttonPrimary2}
                         onPressIn={logout}>
                         <Text style={styles.buttonTextSecondary}>Log Out</Text>
                     </Pressable>
-                </KeyboardAvoidingView>
+                </View>
             </ScrollView>
             <Toast />
         </View>
     )
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingVertical: 40,
-        paddingHorizontal: 20,
-        backgroundColor: 'white'
-    },
-    navbar: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderColor: 'EDEFEE',
-        padding: 10,
-        borderBottomWidth: 0.2
-    },
-    logo: {
-        width: 185,
-        height: 40,
-        alignSelf: 'center'
-    },
-    profileImage: {
-        width: 40,
-        height: 40,
-        borderRadius: 50,
-        backgroundColor: '#EE9972',
-        alignItems: 'center',
-        justifyContent: 'center'
-    },
-    text: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    textInput: {
-        marginTop: 10,
-        padding: 10,
-        fontSize: 14,
-        borderRadius: 10,
-        borderWidth: 2,
-    },
-    button: {
-        backgroundColor: "#3e524b",
-        borderRadius: 10,
-    },
-    buttonSecondary: {
-        borderColor: "#3e524b",
-        borderWidth: 1
-    },
-    buttonDisabled: {
-        backgroundColor: "grey",
-        borderRadius: 10,
-    },
-    buttonLogout: {
-        backgroundColor: "#F4CE14",
-        borderRadius: 10,
-        marginVertical: 20,
-    },
-    buttonText: {
-        fontSize: 18,
-        padding: 40,
-        paddingVertical: 10,
-        textAlign: 'center',
-        color: 'white',
-    },
-    buttonTextSecondary: {
-        fontSize: 18,
-        padding: 20,
-        paddingVertical: 10,
-        textAlign: 'center',
-        color: '#333333',
-    },
-})
 
 export default Profile;
