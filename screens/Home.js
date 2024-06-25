@@ -14,7 +14,6 @@ import {
 import debounce from 'lodash.debounce';
 import Filters from '../components/Filters';
 import { Searchbar } from 'react-native-paper';
-import { ScrollView } from 'react-native-gesture-handler';
 
 const sections = ['Starters', 'Mains', 'Desserts', 'Drinks'];
 

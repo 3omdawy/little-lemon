@@ -185,9 +185,7 @@ function Profile({ navigation }) {
     }
     const logout = async () => {
         try {
-            await AsyncStorage.removeItem("userData");
-            await AsyncStorage.removeItem("preferences");
-            await AsyncStorage.removeItem("isOnboardingCompleted");
+            await AsyncStorage.clear();
             Toast.show({
                 type: 'success',
                 text1: 'Logged Out',
