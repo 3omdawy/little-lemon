@@ -3,9 +3,9 @@ import { View, Image, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingVi
 import { validateEmail } from '../utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import styles from '../assets/styles';
 
-
-function Onboarding() {
+function Onboarding({ navigation }) {
     const [name, onChangeName] = React.useState('');
     const [email, onChangeEmail] = React.useState('');
     const [isNameValid, setIsNameValid] = React.useState(false);
@@ -45,6 +45,13 @@ function Onboarding() {
                 text1: 'Logging in',
                 text2: 'Thanks for signing up 👋'
             });
+            let wentToNewTab = false;
+            setInterval(() => {
+                if (!wentToNewTab) {
+                    navigation.push('Home');
+                    wentToNewTab = true
+                }
+            }, 1000);
         }
         catch (err) {
             Toast.show({
@@ -66,7 +73,9 @@ function Onboarding() {
                 accessible={true}
                 accessibilityLabel={'Little Lemon Logo'}
             />
-            <Text style={styles.text}>Let us get to know you</Text>
+            <View style={{ marginVertical: 20 }}>
+                <Text style={styles.sectionTitle}>Let us get to know you</Text>
+            </View>
             <View style={{ marginVertical: 40 }}>
                 <Text style={{ fontSize: 20 }}>First Name</Text>
                 <TextInput
@@ -89,7 +98,7 @@ function Onboarding() {
                 </View>
             </View>
             <Pressable
-                style={() => isNameValid && isMailValid ? styles.button : styles.buttonDisabled}
+                style={() => isNameValid && isMailValid ? styles.buttonPrimary : styles.buttonDisabled}
                 disabled={!isNameValid || !isMailValid}
                 onPressIn={handleSubscribeRequest}>
                 <Text style={styles.buttonText}>Next</Text>
@@ -98,49 +107,5 @@ function Onboarding() {
         </KeyboardAvoidingView>
     )
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingVertical: 40,
-        paddingHorizontal: 20,
-        backgroundColor: 'white'
-    },
-    logo: {
-        width: 185,
-        height: 40,
-        alignSelf: 'center'
-    },
-    text: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginTop: 60,
-        textAlign: 'center'
-    },
-    textInput: {
-        marginTop: 10,
-        padding: 10,
-        fontSize: 18,
-        borderRadius: 10,
-        borderWidth: 2,
-    },
-    button: {
-        marginVertical: 20,
-        backgroundColor: "#3e524b",
-        borderRadius: 10,
-    },
-    buttonDisabled: {
-        marginVertical: 20,
-        backgroundColor: "grey",
-        borderRadius: 10,
-    },
-    buttonText: {
-        fontSize: 20,
-        padding: 125,
-        paddingVertical: 10,
-        textAlign: 'center',
-        color: 'white',
-    },
-})
 
 export default Onboarding;
