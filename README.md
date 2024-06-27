@@ -12,7 +12,7 @@ For Figma files, see [/assets/Figma](/assets/Figma)
 ## Notes
 * Fetch API is used to download the menu in JSON format one, then save it to DB (`SQLite`)
 * `AsyncStorage` is used to store user preferences and history
-* `StackNavigation' is used between screens
+* `StackNavigation` is used between screens
 ![Navigation](https://github.com/3omdawy/little-lemon/assets/10769610/4752c365-53cd-4099-ba10-8f09bb182c4f)
 
 ## Additional Features (not yet implemented)
